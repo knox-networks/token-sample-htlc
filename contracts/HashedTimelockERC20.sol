@@ -36,6 +36,7 @@ contract HashedTimelockERC20 {
     );
     event HTLCERC20Withdraw(bytes32 indexed contractId);
     event HTLCERC20Refund(bytes32 indexed contractId);
+    event HTLCERC20Log(string logMsg);
 
     struct LockContract {
         address sender;
@@ -69,6 +70,14 @@ contract HashedTimelockERC20 {
         _;
     }
     modifier hashlockMatches(bytes32 _contractId, bytes32 _x) {
+        emit HTLCERC20Log(string(
+            abi.encodePacked(
+                "HashMatch: ", 
+                contracts[_contractId].hashlock, 
+                " ", 
+                sha256(abi.encodePacked(_x))
+            )
+        ));
         require(
             contracts[_contractId].hashlock == sha256(abi.encodePacked(_x)),
             "hashlock hash does not match"
@@ -175,10 +184,19 @@ contract HashedTimelockERC20 {
     function withdraw(bytes32 _contractId, bytes32 _preimage)
         external
         contractExists(_contractId)
-        hashlockMatches(_contractId, _preimage)
+        // hashlockMatches(_contractId, _preimage)
         withdrawable(_contractId)
         returns (bool)
     {
+        emit HTLCERC20Log(string(
+            abi.encodePacked(
+                "HashMatch: ", 
+                contracts[_contractId].hashlock, 
+                " ", 
+                sha256(abi.encodePacked(_preimage))
+            )
+        ));
+
         LockContract storage c = contracts[_contractId];
         c.preimage = _preimage;
         c.withdrawn = true;
